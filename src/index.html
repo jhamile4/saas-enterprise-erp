@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strata ERP | SaaS Enterprise Business Intelligence & Inventory Engine</title>
+  
+  <meta name="description" content="Plataforma SaaS ERP de nivel empresarial para analítica financiera, control de inventario y gestión de roles RBAC. Desarrollado por Jhamile Macavilca.">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="app-sidebar">
+    <div>
+      <div class="brand-logo">
+        <div class="brand-icon">S</div>
+        <div>
+          <div class="brand-title">STRATA ERP</div>
+          <div class="brand-subtitle">Business Intelligence</div>
+        </div>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-item active">
+          <span>📊</span> Dashboard Principal
+        </li>
+        <li class="nav-item">
+          <span>📈</span> Analítica Financiera
+        </li>
+        <li class="nav-item">
+          <span>📦</span> Inventario & Almacén
+        </li>
+        <li class="nav-item">
+          <span>📑</span> Reportes Ejecutivos
+        </li>
+        <li class="nav-item">
+          <span>🔐</span> Control Roles RBAC
+        </li>
+      </ul>
+    </div>
+
+    <div class="user-badge">
+      <div class="user-name">Jhamile Macavilca</div>
+      <div class="user-role" id="roleBadge">Administradora General</div>
+    </div>
+  </aside>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="app-main">
+    
+    <!-- TOP TOOLBAR & RBAC SWITCHER -->
+    <header class="top-header">
+      <div class="page-title">
+        <h1>Dashboard de Análisis de Negocio</h1>
+        <p>Monitoreo financiero en tiempo real y gestión inteligente de inventarios</p>
+      </div>
+
+      <div class="rbac-bar">
+        <span class="rbac-label">Simulador de Rol:</span>
+        <select class="rbac-select" id="rbacSelect">
+          <option value="admin">Administradora General (Full Access)</option>
+          <option value="analyst">Analista de Negocios (Vista Financiera)</option>
+          <option value="warehouse">Gerente de Almacén (Operativo)</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- EXECUTIVE FINANCIAL KPI CARDS -->
+    <section class="kpi-grid">
+      <!-- KPI 1: MRR -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Ingreso Mensual Recurrente (MRR)</span>
+          <span class="kpi-trend trend-up">▲ +15.2%</span>
+        </div>
+        <div class="kpi-value" id="mrrValue">$125,400</div>
+        <div class="kpi-subtitle">vs $108,800 el mes pasado</div>
+      </div>
+
+      <!-- KPI 2: Valor Total de Ventas -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Valoración de Inventario Activo</span>
+          <span class="kpi-trend trend-up">▲ +12.5%</span>
+        </div>
+        <div class="kpi-value" id="revenueValue">$1,480,000</div>
+        <div class="kpi-subtitle">Activos tecnológicos en almacén</div>
+      </div>
+
+      <!-- KPI 3: Cuentas Corporativas -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Cuentas / Licencias Activas</span>
+          <span class="kpi-trend trend-up">▲ +6.1%</span>
+        </div>
+        <div class="kpi-value" id="activeClientsValue">24,932</div>
+        <div class="kpi-subtitle">Usuarios en plataformas SaaS</div>
+      </div>
+
+      <!-- KPI 4: Rotación de Inventarios -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Rotación de Inventario</span>
+          <span class="kpi-trend trend-up">▲ 4.8x</span>
+        </div>
+        <div class="kpi-value" id="turnoverValue">4.8x</div>
+        <div class="kpi-subtitle">Velocidad promedio de despacho</div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS CHARTS SECTION -->
+    <section class="charts-grid">
+      <!-- Chart 1: Revenue Line Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Crecimiento de Ingresos Recurrentes (2026)</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Proyección financiera basada en ventas de servicios e infraestructura</div>
+          </div>
+          <span style="color: var(--accent-gold); font-weight:700; font-size:0.85rem;">En miles de USD ($)</span>
+        </div>
+
+        <div class="canvas-container">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Summary Card: Business Intelligence Insights -->
+      <div class="chart-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div class="chart-title" style="margin-bottom: 16px;">💡 Insights de Análisis de Negocio</div>
+          
+          <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
+            <strong style="color: var(--text-main);">Optimización de Margen Bruto:</strong> El margen promedio de servicios cloud alcanza el <span style="color: var(--accent-green); font-weight:700;">44.8%</span>. Se recomienda priorizar la renovación de licencias SaaS Enterprise.
+          </div>
+
+          <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
+            <strong style="color: var(--text-main);">Alerta de Cadena de Suministro:</strong> Existen 2 productos que alcanzaron su nivel mínimo de seguridad.
+          </div>
+        </div>
+
+        <div style="padding: 16px; background: var(--bg-surface); border-radius: var(--radius-md); border-left: 3px solid var(--accent-gold); font-size:0.85rem;">
+          📌 <strong>Sugerencia de Negocio:</strong> Aprobar orden de compra para licencias SaaS y Certificados SSL.
+        </div>
+      </div>
+    </section>
+
+    <!-- INVENTORY TABLE SECTION -->
+    <section class="inventory-section">
+      <div class="inventory-header">
+        <div>
+          <h2 style="font-size: 1.3rem; font-weight: 800;">Gestión Inteligente de Inventario</h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Control de existencias, precios de costo, precio de venta y reorden automático</p>
+        </div>
+
+        <div class="table-controls">
+          <input type="text" class="search-input" id="searchInput" placeholder="🔍 Buscar SKU, producto o categoría...">
+          <button class="btn-erp btn-secondary" id="exportBtn">📥 Exportar CSV</button>
+          <button class="btn-erp" id="addProductBtn">➕ Nuevo Producto</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>SKU / ID</th>
+              <th>Producto / Servicio</th>
+              <th>Categoría</th>
+              <th>Existencias</th>
+              <th>Precio Costo</th>
+              <th>Precio Venta</th>
+              <th>Margen %</th>
+              <th>Estado Stock</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTableBody">
+            <!-- Renderizado dinámicamente con app.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL FOR ADDING NEW PRODUCT -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-box">
+      <h2 style="font-size: 1.4rem; font-weight:800; margin-bottom: 20px;">Registrar Nuevo Producto / Servicio</h2>
+      
+      <form id="productForm">
+        <div class="form-group">
+          <label class="form-label">Nombre del Producto / Servicio</label>
+          <input type="text" id="prodName" class="form-input" placeholder="Ej. Balanciador NGINX Plus Enterprise" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select id="prodCategory" class="form-input" required>
+            <option value="Infraestructura Cloud">Infraestructura Cloud</option>
+            <option value="Licencias Software">Licencias Software</option>
+            <option value="Hardware Redes">Hardware Redes</option>
+            <option value="Seguridad">Seguridad</option>
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label">Stock Inicial</label>
+            <input type="number" id="prodStock" class="form-input" placeholder="Ej. 25" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Stock Mínimo (Alerta)</label>
+            <input type="number" id="prodMinStock" class="form-input" placeholder="Ej. 10" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label">Precio de Costo ($)</label>
+            <input type="number" step="0.01" id="prodCost" class="form-input" placeholder="Ej. 150.00" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Precio de Venta ($)</label>
+            <input type="number" step="0.01" id="prodPrice" class="form-input" placeholder="Ej. 290.00" required>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+          <button type="button" class="btn-erp btn-secondary" id="closeModalBtn">Cancelar</button>
+          <button type="submit" class="btn-erp">Guardar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+</body>
+</html>
