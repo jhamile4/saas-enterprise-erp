@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Build de Next.js
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Variables de entorno (contienen credenciales)
+.env
+.env*.local
+
+# Base de datos local
+prisma/*.db
+prisma/*.db-journal
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

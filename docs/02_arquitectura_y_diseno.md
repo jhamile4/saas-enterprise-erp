@@ -1,100 +1,137 @@
-﻿# Documento de Arquitectura de Software & Especificación de APIs
+# Documento de Arquitectura de Software & Especificación de APIs
 
 > **Proyecto:** Strata ERP — SaaS Enterprise Business Intelligence & Inventory Engine  
 > **Autora & Arquitecta de Software:** Jhamile Macavilca  
+> **Framework & Stack:** Next.js 14+ (TypeScript), App Router, Prisma ORM, PostgreSQL, Redis, TailwindCSS  
+> **Versión:** 2.0.0  
+> **Fecha:** Octubre 2026  
 
 ---
 
-## 1. Vista de Arquitectura de Software
+## 1. Vista de Arquitectura de Software (Fullstack Modern Architecture)
 
-El sistema sigue una **Arquitectura de Microservicios Desacoplada / N-Capas** con separación estricta entre el cliente Web de presentación, el servidor de aplicaciones de lógica de negocio y el motor de persistencia de datos con caché Redis.
+El sistema sigue una **Arquitectura Monolítica Modular / Serverless-Ready** en **Next.js 14+ (App Router)**, combinando React Server Components (RSC) para el renderizado eficiente en servidor, Server Actions / API Routes tipo REST para la lógica de negocio y comunicación de datos, y una capa de persistencia híbrida con **PostgreSQL + Prisma ORM** respaldada por **Redis** para acelerar métricas financieras (sub-10ms).
 
-`mermaid
+```mermaid
 graph TD
-    Client[Cliente Web SPA / Client Layer] -->|HTTP REST / JSON| Gateway[API Gateway & Auth Middleware]
+    Client[Cliente Web / Browser SPA & Dashboard UI] -->|HTTP/2 & Server Actions| NextApp[Next.js 14+ App Router Server Layer]
     
-    subgraph Backend Application Services
-        Gateway --> AuthSvc[Servicio de Autenticación & RBAC]
-        Gateway --> AnalyticsSvc[Servicio de Analítica Financiera]
-        Gateway --> InventorySvc[Servicio de Inventarios]
+    subgraph Next.js Application Core
+        NextApp --> RSC[React Server Components - SSR]
+        NextApp --> APIRoutes[API Routes / REST / Next Auth]
+        APIRoutes --> RBACMiddleware[RBAC & JWT Security Guard]
     end
     
-    subgraph Data Layer
-        AnalyticsSvc --> Postgres[(PostgreSQL DB)]
-        InventorySvc --> Postgres
-        InventorySvc -->|Cache Query <5ms| Redis[(Redis Cache)]
+    subgraph Business Logic & Services
+        RBACMiddleware --> AnalyticsEngine[Motor de Analítica Financiera]
+        RBACMiddleware --> InventoryEngine[Motor de Inventario & Alertas Reorden]
+        RBACMiddleware --> ExportEngine[Motor de Exportación PDF/CSV]
     end
-`
+    
+    subgraph Data & Caching Layer
+        AnalyticsEngine --> Prisma[Prisma ORM - TypeSafe Query Builder]
+        InventoryEngine --> Prisma
+        InventoryEngine -->|Redis Cache - Sub 10ms| Redis[(Redis / Upstash Cache)]
+        Prisma --> Postgres[(PostgreSQL Relational DB)]
+    end
+```
 
 ---
 
-## 2. Modelo Entidad-Relación de Base de Datos (PostgreSQL)
+## 2. Modelo de Datos Entidad-Relación (Prisma Schema / PostgreSQL)
 
-`sql
--- Tabla de Usuarios
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role_id INT REFERENCES roles(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+```prisma
+// schema.prisma
 
--- Tabla de Roles RBAC
-CREATE TABLE roles (
-    id SERIAL PRIMARY KEY,
-    role_name VARCHAR(50) NOT NULL UNIQUE,
-    can_view_costs BOOLEAN DEFAULT FALSE,
-    can_manage_inventory BOOLEAN DEFAULT FALSE,
-    can_export_reports BOOLEAN DEFAULT FALSE
-);
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
--- Tabla de Productos / Servicios
-CREATE TABLE products (
-    id VARCHAR(20) PRIMARY KEY, -- SKU-XXXX
-    name VARCHAR(150) NOT NULL,
-    category_id INT REFERENCES categories(id),
-    stock INT NOT NULL DEFAULT 0,
-    min_stock INT NOT NULL DEFAULT 10,
-    unit_cost DECIMAL(10,2) NOT NULL,
-    unit_price DECIMAL(10,2) NOT NULL,
-    status VARCHAR(20) DEFAULT ''Normal'',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN       // Administradora General - Acceso Total
+  ANALYST     // Analista de Negocios - Ver costos y reportes
+  WAREHOUSE   // Gerente de Almacén - Operaciones sin ver costos
+}
+
+enum ProductStatus {
+  NORMAL
+  REORDER
+  CRITICAL
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(WAREHOUSE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+
+  @@map("categories")
+}
+
+model Product {
+  id          String        @id @default(uuid())
+  sku         String        @unique // SKU-XXXX
+  name        String
+  categoryId  String
+  category    Category      @relation(fields: [categoryId], references: [id])
+  stock       Int           @default(0)
+  minStock    Int           @default(10)
+  unitCost    Decimal       @db.Decimal(10, 2)
+  unitPrice   Decimal       @db.Decimal(10, 2)
+  status      ProductStatus @default(NORMAL)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("products")
+}
+```
 
 ---
 
-## 3. Especificación de Endpoints REST API
+## 3. Especificación de APIs & Endpoints REST / Server Actions
 
-### 3.1 Analítica Financiera (/api/v1/analytics)
-* GET /api/v1/analytics/kpis
+### 3.1 Analítica Financiera (`/api/v1/analytics`)
+* **`GET /api/v1/analytics/kpis`**
+  * **Middleware:** Autenticación JWT + Permiso RBAC (`ADMIN` / `ANALYST`)
+  * **Caché:** Redis TTL 60s (con invalidación programada en mutaciones de inventario)
   * **Respuesta (200 OK):**
-    `json
+    ```json
     {
-       mrr: 125400,
-      totalInventoryValue: 1480000,
-      activeAccounts: 24932,
-      turnoverRate: 4.8
+      "mrr": 125400.00,
+      "arr": 1504800.00,
+      "totalInventoryValue": 1480000.00,
+      "totalInventoryCost": 920000.00,
+      "grossMarginPercentage": 37.84,
+      "activeProducts": 142,
+      "criticalStockItems": 5,
+      "turnoverRate": 4.8
     }
-    `
+    ```
 
-### 3.2 Gestión de Inventario (/api/v1/inventory)
-* GET /api/v1/inventory?search=AWS
-* POST /api/v1/inventory
-  * **Payload (Body):**
-    `json
-    {
-      name: Servidor NGINX Enterprise Node,
-      category: Infraestructura Cloud,
-      stock: 30,
-      minStock: 10,
-      unitCost: 120.00,
-      unitPrice: 280.00
-    }
-    `
+### 3.2 Gestión de Inventarios (`/api/v1/inventory`)
+* **`GET /api/v1/inventory?search=cloud&category=infra&status=CRITICAL`**
+  * Retorna catálogo filtrado y paginado. Si el rol del usuario es `WAREHOUSE`, los campos `unitCost` y `grossMargin` son omitidos/enmascarados a nivel de servidor.
+* **`POST /api/v1/inventory`**
+  * Crea un nuevo ítem, valida SKU único, calcula estado (`NORMAL`, `REORDER`, `CRITICAL`) automáticamente e invalida la caché de analítica en Redis.
 
 ---
 
-© 2026 Jhamile Macavilca — Especificación de Arquitectura de Software.
+© 2026 Jhamile Macavilca — Especificación de Arquitectura de Software con Next.js & TypeScript.
